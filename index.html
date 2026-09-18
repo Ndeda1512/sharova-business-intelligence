@@ -15,10 +15,10 @@
 <body>
 <div id="auth" class="auth"><div class="authcard">
 <h1>Sharova</h1><div class="eyebrow">BUSINESS INTELLIGENCE</div>
-<p>Sign in to keep your business activity saved securely and available whenever you return.</p>
-<input id="email" type="email" placeholder="Your email address">
-<button class="btn primary" style="width:100%" onclick="sendMagicLink()">Continue</button>
-<div id="authStatus" class="status"></div>
+<p>Start using Sharova immediately. Your business data will be saved on this device while we finish the account sign-in connection.</p>
+<input id="email" type="email" placeholder="Email (optional)">
+<button class="btn primary" style="width:100%" onclick="startLocal()">Continue to Sharova</button>
+<div id="authStatus" class="status">No account setup is required to start.</div>
 </div></div>
 
 <div class="app" id="app" style="display:none">
@@ -134,7 +134,69 @@ async function saveCredit(){const n=val('creditName'),a=val('creditAmount');if(!
 async function saveBusinessName(){const n=val('businessName');if(!n)return;const {error}=await sb.from('businesses').update({name:n}).eq('id',business.id);if(error)return alert(error.message);business.name=n;alert('Business name saved.')}
 async function start(){
  const {data:{session}}=await sb.auth.getSession();if(session?.user){user=session.user;document.getElementById('auth').style.display='none';document.getElementById('app').style.display='flex';try{await ensureBusiness();await loadData()}catch(e){alert('Sharova could not load your business data: '+e.message)}}}
-sb.auth.onAuthStateChange((event,session)=>{if(session?.user&&!user){user=session.user;start()}});
-start();
+/* Temporary offline-first mode: the app remains usable even when Supabase email
+   authentication is not configured. When account auth is connected later, the
+   existing Supabase path can be re-enabled without changing the business UI. */
+let localMode=true;
+function localKey(k){return 'sharova_bi_'+k}
+function readLocal(k,fallback){try{const v=localStorage.getItem(localKey(k));return v?JSON.parse(v):fallback}catch(e){return fallback}}
+function writeLocal(k,v){localStorage.setItem(localKey(k),JSON.stringify(v))}
+function startLocal(){
+  localMode=true;
+  user={id:'local-device-user'};
+  business={id:'local-business',user_id:user.id,name:readLocal('business_name','My Business'),currency:'KES'};
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').style.display='flex';
+  loadData().catch(e=>alert('Sharova could not load your saved data: '+e.message));
+}
+async function ensureBusiness(){
+  if(localMode)return;
+  let {data,error}=await sb.from('businesses').select('*').eq('user_id',user.id).order('created_at').limit(1).maybeSingle();
+  if(error)throw error;
+  if(!data){const r=await sb.from('businesses').insert({user_id:user.id,name:'My Business',currency:'KES'}).select().single();if(r.error)throw r.error;data=r.data}
+  business=data;document.getElementById('businessName').value=data.name;
+}
+async function loadData(){
+  if(localMode){
+    entries=readLocal('entries',[]);
+    stocks=readLocal('stocks',[]);
+    document.getElementById('businessName').value=readLocal('business_name','My Business');
+    renderAll(); return;
+  }
+  const e=await sb.from('business_entries').select('*').eq('business_id',business.id).order('created_at',{ascending:false});
+  if(e.error)throw e.error;entries=e.data||[];
+  const s=await sb.from('stock_items').select('*').eq('business_id',business.id).order('updated_at',{ascending:false});
+  if(s.error)throw s.error;stocks=s.data||[]; renderAll();
+}
+async function saveEntry(type,amount,description,date){
+  const item={id:crypto.randomUUID(),business_id:business.id,user_id:user.id,entry_type:type,amount:Number(amount),description,entry_date:date||today(),created_at:new Date().toISOString()};
+  if(localMode){entries.unshift(item);writeLocal('entries',entries);renderAll();return}
+  const {error}=await sb.from('business_entries').insert(item);if(error)throw error;await loadData();
+}
+async function saveStock(){
+  const n=val('stockName'),q=val('stockQty');if(!n||!q)return alert('Add a product and quantity.');
+  try{
+    const payload={business_id:business.id,user_id:user.id,name:n,quantity:Number(q),unit_cost:Number(val('stockCost')||0),reorder_level:Number(val('stockReorder')||0),updated_at:new Date().toISOString()};
+    if(localMode){
+      const existing=stocks.find(x=>x.name.toLowerCase()===n.toLowerCase());
+      if(existing)Object.assign(existing,payload);else stocks.unshift({id:crypto.randomUUID(),created_at:new Date().toISOString(),...payload});
+      writeLocal('stocks',stocks);renderAll();
+    }else{
+      const existing=stocks.find(x=>x.name.toLowerCase()===n.toLowerCase());
+      const r=existing?await sb.from('stock_items').update(payload).eq('id',existing.id):await sb.from('stock_items').insert(payload);
+      if(r.error)throw r.error;await loadData();
+    }
+    document.getElementById('stockName').value='';document.getElementById('stockQty').value='';
+    alert('Stock saved securely.');
+  }catch(e){alert(e.message)}
+}
+async function saveBusinessName(){
+  const n=val('businessName');if(!n)return;
+  if(localMode){business.name=n;writeLocal('business_name',n);alert('Business name saved on this device.');return}
+  const {error}=await sb.from('businesses').update({name:n}).eq('id',business.id);if(error)return alert(error.message);business.name=n;alert('Business name saved.')
+}
+async function start(){startLocal()}
+async function signOut(){if(localMode){location.reload();return}await sb.auth.signOut();location.reload()}
+sb.auth.onAuthStateChange((event,session)=>{if(session?.user&&!user&&!localMode){user=session.user;start()}});
 </script>
 </body></html>
