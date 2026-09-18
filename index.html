@@ -60,7 +60,7 @@
 <script>
 const SUPABASE_URL='https://ofodxwpukrgegtavahfm.supabase.co';
 const SUPABASE_KEY='sb_publishable_RvJAQ8p31BacTxANx3gltw_KRxlpoxe';
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const sb=window.supabase?supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
 let user=null,business=null,entries=[],stocks=[];
 const today=()=>new Date().toISOString().slice(0,10);
 const money=n=>'KSh '+Number(n||0).toLocaleString('en-KE',{maximumFractionDigits:2});
@@ -197,6 +197,6 @@ async function saveBusinessName(){
 }
 async function start(){startLocal()}
 async function signOut(){if(localMode){location.reload();return}await sb.auth.signOut();location.reload()}
-sb.auth.onAuthStateChange((event,session)=>{if(session?.user&&!user&&!localMode){user=session.user;start()}});
+if(sb){sb.auth.onAuthStateChange((event,session)=>{if(session?.user&&!user&&!localMode){user=session.user;start()}});}
 </script>
 </body></html>
