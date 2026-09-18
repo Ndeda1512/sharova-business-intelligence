@@ -17,7 +17,7 @@
 </nav></aside>
 <main class="main">
 <section id="home" class="page active">
-<div class="top"><div><div class="eyebrow">Business Pulse</div><div class="title">Good morning.</div><div class="date" id="date"></div></div><button class="btn primary" onclick="showPage('sales')">Add activity</button></div>
+<div class="top"><div><div class="eyebrow">Business Pulse</div><div class="title" id="greeting">Hello.</div><div class="date" id="date"></div></div><button class="btn primary" onclick="showPage('sales')">Add activity</button></div>
 <div class="brief"><h2>Today's Business Brief</h2><div class="briefgrid">
 <div class="insight"><small>Attention</small><strong>Cash is tighter than your recent pattern.</strong></div>
 <div class="insight"><small>Why it matters</small><strong>Stock spending rose while customer payments lagged.</strong></div>
@@ -33,12 +33,12 @@
 </main></div>
 <script>
 document.getElementById('date').textContent=new Date().toLocaleDateString('en-KE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
+document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showPage(b.dataset.page));setGreeting();
 let sales=0,expenses=0,credit=0,stock=0;
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id))}
 function addRow(container,html){const el=document.getElementById(container);if(el.classList.contains('empty'))el.classList.remove('empty');el.innerHTML='<div style="padding:12px 0;border-bottom:1px solid #e9e6df">'+html+'</div>'+el.innerHTML}
 function val(id){return document.getElementById(id).value}
-function updateMetrics(){document.getElementById('salesMetric').textContent='KSh '+sales.toLocaleString();document.getElementById('expenseMetric').textContent='KSh '+expenses.toLocaleString();document.getElementById('creditMetric').textContent='KSh '+credit.toLocaleString();document.getElementById('stockMetric').textContent='KSh '+stock.toLocaleString()}
+function setGreeting(){const h=new Date().getHours();document.getElementById("greeting").textContent=h<12?"Good morning.":h<18?"Good afternoon.":"Good evening."}function updateMetrics(){document.getElementById('salesMetric').textContent='KSh '+sales.toLocaleString();document.getElementById('expenseMetric').textContent='KSh '+expenses.toLocaleString();document.getElementById('creditMetric').textContent='KSh '+credit.toLocaleString();document.getElementById('stockMetric').textContent='KSh '+stock.toLocaleString()}
 function generateInsight(){if(!sales&&!expenses&&!credit&&!stock)return alert('Add some business activity first so Sharova can analyze it.');let a=sales>=expenses?'Recorded sales currently exceed recorded expenses.':'Recorded expenses currently exceed recorded sales.';let b=credit?'Customer money owed: KSh '+credit.toLocaleString()+'.':'No customer balances recorded yet.';document.getElementById('changes').textContent=a+' '+b;alert('Sharova has analyzed the information you entered. The next AI layer can turn these signals into deeper recommendations.')}
 function saveSale(){if(!val('saleName')||!val('saleAmount'))return alert('Add a description and amount.');sales+=Number(val('saleAmount'));if(val('saleStatus')==='Customer owes')credit+=Number(val('saleAmount'));updateMetrics();addRow('salesList','<b>'+val('saleName')+'</b> · KSh '+Number(val('saleAmount')).toLocaleString()+' · '+val('saleStatus'));alert('Sale saved.')}
 function saveExpense(){if(!val('expenseName')||!val('expenseAmount'))return alert('Add an expense and amount.');expenses+=Number(val('expenseAmount'));updateMetrics();addRow('expenseList','<b>'+val('expenseName')+'</b> · KSh '+Number(val('expenseAmount')).toLocaleString()+' · '+val('expenseCat'));alert('Expense saved.')}
