@@ -1,202 +1,41 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sharova Business Intelligence</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-:root{--ink:#171717;--muted:#707070;--line:#e9e6df;--paper:#fbfaf7;--card:#fff;--accent:#b28b52;--soft:#f3eee6;--danger:#9a5d4e;--good:#5c7b60}
-*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,system-ui,-apple-system,sans-serif}button,input,select{font:inherit}
-.app{display:flex;min-height:100vh}.side{width:240px;border-right:1px solid var(--line);padding:28px 18px;background:#fff}.brand{font-family:Georgia,serif;font-size:25px;margin:0 10px 4px}.tag{font-size:11px;color:var(--muted);margin:0 10px 28px}.nav button{display:block;width:100%;border:0;background:none;text-align:left;padding:12px 14px;border-radius:10px;color:#555;cursor:pointer;margin:3px 0}.nav button.active,.nav button:hover{background:var(--soft);color:var(--ink)}.main{flex:1;max-width:1100px;padding:34px clamp(20px,5vw,56px)}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}.eyebrow{font-size:12px;color:var(--accent);font-weight:700;letter-spacing:.12em;text-transform:uppercase}.title{font:34px Georgia,serif;margin:5px 0}.date{font-size:13px;color:var(--muted)}.brief{background:var(--ink);color:white;border-radius:18px;padding:24px;margin-bottom:22px}.brief h2{font:23px Georgia,serif;margin:0 0 16px}.briefgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.insight{background:#292929;border-radius:12px;padding:15px}.insight small{color:#bdbdbd}.insight strong{display:block;margin-top:7px;font-size:14px;line-height:1.45}.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}.btn{border:1px solid #555;background:#fff;color:#111;padding:10px 14px;border-radius:9px;cursor:pointer}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}.metric{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:17px}.metric span{display:block;color:var(--muted);font-size:12px}.metric b{display:block;font-size:22px;margin-top:6px}.quick{margin-top:12px;border:0;background:var(--soft);padding:8px 10px;border-radius:8px;font-size:12px;cursor:pointer}.quick:hover{background:#e9e1d5}.quickstart p{color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 14px}.quickactions{display:flex;gap:9px;flex-wrap:wrap}.up{font-size:11px;color:var(--good);margin-top:5px}.down{font-size:11px;color:var(--danger);margin-top:5px}.section{background:#fff;border:1px solid var(--line);border-radius:15px;padding:20px;margin-bottom:18px}.sectionhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.section h3{margin:0;font-size:16px}.table{width:100%;border-collapse:collapse;font-size:13px}.table th,.table td{text-align:left;padding:12px 8px;border-bottom:1px solid var(--line)}.table th{font-size:11px;color:var(--muted);text-transform:uppercase}.pill{padding:5px 8px;border-radius:99px;background:var(--soft);font-size:11px}.page{display:none}.page.active{display:block}.form{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.form label{font-size:12px;color:var(--muted)}.form input,.form select{width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:9px;background:#fff}.full{grid-column:1/-1}.empty{padding:30px;text-align:center;color:var(--muted)}.auth{position:fixed;inset:0;background:var(--paper);display:grid;place-items:center;padding:20px;z-index:20}.authcard{width:min(440px,100%);background:#fff;border:1px solid var(--line);border-radius:20px;padding:28px}.authcard h1{font:30px Georgia,serif;margin:0 0 6px}.authcard p{color:var(--muted);font-size:14px;line-height:1.5}.authcard input{width:100%;padding:13px;border:1px solid var(--line);border-radius:10px;margin:10px 0}.status{font-size:13px;margin-top:12px;color:var(--muted)}.logout{margin-top:22px;width:100%;border:1px solid var(--line);background:#fff;padding:10px;border-radius:9px;cursor:pointer}.businessbar{display:flex;gap:10px;align-items:center;margin-bottom:20px}.businessbar input{flex:1;padding:10px;border:1px solid var(--line);border-radius:9px}
-@media(max-width:760px){.side{width:74px;padding:20px 8px}.brand{font-size:16px;text-align:center;margin:0}.tag{display:none}.nav button{font-size:0;text-align:center;padding:12px 5px}.nav button:first-letter{font-size:18px}.main{padding:24px 15px}.title{font-size:28px}.metrics{grid-template-columns:repeat(2,1fr)}.briefgrid{grid-template-columns:1fr}.form{grid-template-columns:1fr}.top{align-items:flex-start}.businessbar{align-items:stretch;flex-direction:column}}
-</style>
-</head>
-<body>
-<div id="auth" class="auth"><div class="authcard">
-<h1>Sharova</h1><div class="eyebrow">BUSINESS INTELLIGENCE</div>
-<p>Start using Sharova immediately. Your business data will be saved on this device while we finish the account sign-in connection.</p>
-<input id="email" type="email" placeholder="Email (optional)">
-<button class="btn primary" style="width:100%" onclick="startLocal()">Continue to Sharova</button>
-<div id="authStatus" class="status">No account setup is required to start.</div>
-</div></div>
-
-<div class="app" id="app" style="display:none">
-<aside class="side"><h1 class="brand">Sharova</h1><p class="tag">BUSINESS INTELLIGENCE</p><nav class="nav">
-<button class="active" data-page="home">◈ &nbsp;Overview</button><button data-page="sales">＋ &nbsp;Sales</button><button data-page="expenses">− &nbsp;Expenses</button><button data-page="stock">▦ &nbsp;Stock</button><button data-page="credit">◎ &nbsp;Customer money</button>
-</nav><button class="logout" onclick="signOut()">Sign out</button></aside>
-
-<main class="main">
-<div class="businessbar"><input id="businessName" placeholder="Business name"><button class="btn" onclick="saveBusinessName()">Save name</button></div>
-
-<section id="home" class="page active">
-<div class="top"><div><div class="eyebrow">Business Pulse</div><div class="title" id="greeting">Hello.</div><div class="date" id="date"></div></div><button class="btn primary" onclick="showPage('sales')">＋ Enter business activity</button></div>
-<div class="brief"><h2>Today's Business Brief</h2><div class="briefgrid">
-<div class="insight"><small>Attention</small><strong id="attention">Add activity and Sharova will look for signals.</strong></div>
-<div class="insight"><small>Why it matters</small><strong id="why">Your first entries give Sharova a baseline for your business.</strong></div>
-<div class="insight"><small>Next action</small><strong id="next">Enter today's sales, expenses, stock and customer money.</strong></div>
-</div><div class="actions"><button class="btn" onclick="explainInsight()">Why does this matter?</button><button class="btn" onclick="showPage('home')">Refresh brief</button></div></div>
-
-<div class="metrics">
-<div class="metric"><span>Sales today</span><b id="salesMetric">KSh 0</b><button class="quick" onclick="showPage('sales')">＋ Enter sales</button></div>
-<div class="metric"><span>Expenses today</span><b id="expenseMetric">KSh 0</b><button class="quick" onclick="showPage('expenses')">＋ Record expense</button></div>
-<div class="metric"><span>Customer money owed</span><b id="creditMetric">KSh 0</b><button class="quick" onclick="showPage('credit')">＋ Add customer debt</button></div>
-<div class="metric"><span>Stock value</span><b id="stockMetric">KSh 0</b><button class="quick" onclick="showPage('stock')">＋ Add stock</button></div>
-</div>
-
-<div class="section quickstart"><div class="sectionhead"><h3>Enter your business numbers</h3><span class="pill">Start here</span></div><p>These four actions feed Sharova your real business activity. Your saved information is used to calculate the Overview and business signals.</p><div class="quickactions"><button class="btn primary" onclick="showPage('sales')">＋ Enter sales</button><button class="btn" onclick="showPage('expenses')">＋ Record expense</button><button class="btn" onclick="showPage('stock')">＋ Add stock</button><button class="btn" onclick="showPage('credit')">＋ Add customer debt</button></div></div>
-<div class="section"><div class="sectionhead"><h3>What changed?</h3><span class="pill">Based on your saved data</span></div><div id="changes" class="empty">No business activity recorded yet.</div></div>
-</section>
-
-<section id="sales" class="page"><div class="top"><div><div class="eyebrow">Enter your numbers</div><div class="title">Sales</div><div class="date">Record money your business made.</div></div></div><div class="section"><div class="form"><label>Product / description<input id="saleName" placeholder="e.g. Cooking oil"></label><label>Amount (KSh)<input id="saleAmount" type="number" min="0" placeholder="0"></label><label>Payment status<select id="saleStatus"><option value="paid">Paid</option><option value="customer_debt">Customer owes</option></select></label><label>Date<input id="saleDate" type="date"></label><button class="btn primary full" onclick="saveSale()">Save sale</button></div></div><div class="section"><h3>Recent sales</h3><div id="salesList" class="empty">Loading...</div></div></section>
-
-<section id="expenses" class="page"><div class="top"><div><div class="eyebrow">Enter your numbers</div><div class="title">Expenses</div><div class="date">Record money your business spent.</div></div></div><div class="section"><div class="form"><label>Expense<input id="expenseName" placeholder="e.g. Supplier transport"></label><label>Amount (KSh)<input id="expenseAmount" type="number" min="0" placeholder="0"></label><label>Category<select id="expenseCat"><option>Stock</option><option>Transport</option><option>Utilities</option><option>Other</option></select></label><label>Date<input id="expenseDate" type="date"></label><button class="btn primary full" onclick="saveExpense()">Save expense</button></div></div><div class="section"><h3>Recent expenses</h3><div id="expenseList" class="empty">Loading...</div></div></section>
-
-<section id="stock" class="page"><div class="top"><div><div class="eyebrow">Enter your numbers</div><div class="title">Stock</div><div class="date">Record what you currently hold.</div></div></div><div class="section"><div class="form"><label>Product<input id="stockName" placeholder="e.g. Sugar 1kg"></label><label>Quantity<input id="stockQty" type="number" min="0" placeholder="0"></label><label>Unit cost (KSh)<input id="stockCost" type="number" min="0" placeholder="0"></label><label>Reorder level<input id="stockReorder" type="number" min="0" placeholder="5"></label><button class="btn primary full" onclick="saveStock()">Save stock item</button></div></div><div class="section"><h3>Stock watch</h3><div id="stockList" class="empty">Loading...</div></div></section>
-
-<section id="credit" class="page"><div class="top"><div><div class="eyebrow">Enter your numbers</div><div class="title">Customer money</div><div class="date">Record money customers still owe you.</div></div></div><div class="section"><div class="form"><label>Customer<input id="creditName" placeholder="Customer name"></label><label>Amount owed (KSh)<input id="creditAmount" type="number" min="0" placeholder="0"></label><label>Due date<input id="creditDate" type="date"></label><label>Note<input id="creditNote" placeholder="Optional"></label><button class="btn primary full" onclick="saveCredit()">Save outstanding amount</button></div></div><div class="section"><h3>Outstanding</h3><div id="creditList" class="empty">Loading...</div></div></section>
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sharova Business Intelligence</title><style>
+:root{--ink:#171717;--muted:#777;--line:#e8e3db;--paper:#fbfaf7;--accent:#b28b52;--soft:#f3eee6}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px system-ui,-apple-system,sans-serif}.auth{min-height:100vh;display:grid;place-items:center;padding:20px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:28px;width:min(440px,100%)}h1,h2{font-family:Georgia,serif}h1{font-size:30px;margin:0 0 5px}.eyebrow{color:var(--accent);font-size:11px;font-weight:700;letter-spacing:.14em}.muted{color:var(--muted);line-height:1.5}input,select,button{font:inherit}input,select{padding:12px;border:1px solid var(--line);border-radius:9px;width:100%;background:#fff}button{padding:11px 14px;border-radius:9px;border:1px solid #555;background:#fff;cursor:pointer}.primary{background:var(--accent);border-color:var(--accent);color:#fff}.app{display:none;min-height:100vh}.side{width:220px;background:#fff;border-right:1px solid var(--line);padding:25px 15px}.brand{font:25px Georgia,serif;margin:0 10px 3px}.tag{font-size:10px;color:var(--muted);margin:0 10px 25px}.nav button{width:100%;border:0;text-align:left;background:transparent;margin:2px 0}.nav button.active{background:var(--soft)}.main{max-width:1100px;flex:1;padding:30px clamp(16px,5vw,55px)}.bar{display:flex;gap:8px;margin-bottom:20px}.bar input{flex:1}.page{display:none}.page.active{display:block}.top{display:flex;justify-content:space-between;gap:15px;align-items:center}.title{font:34px Georgia,serif;margin:5px 0 20px}.brief{background:var(--ink);color:#fff;padding:22px;border-radius:17px;margin-bottom:20px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.insight{background:#292929;padding:14px;border-radius:11px}.insight small{color:#bbb}.insight b{display:block;margin-top:7px;line-height:1.4}.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.metric,.section{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px;margin-bottom:16px}.metric span{display:block;color:var(--muted);font-size:12px}.metric b{font-size:22px;display:block;margin:5px 0 10px}.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}.form label{font-size:12px;color:var(--muted)}.form input,.form select{margin-top:5px}.full{grid-column:1/-1}.empty{text-align:center;color:var(--muted);padding:25px}@media(max-width:700px){.side{width:68px;padding:20px 7px}.brand{font-size:15px;text-align:center}.tag{display:none}.nav button{font-size:0;text-align:center}.nav button:first-letter{font-size:18px}.main{padding:20px 12px}.metrics{grid-template-columns:1fr 1fr}.grid,.form{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.title{font-size:28px}}
+</style></head><body>
+<div id="auth" class="auth"><div class="card"><h1>Sharova</h1><div class="eyebrow">BUSINESS INTELLIGENCE</div><p class="muted">Start using Sharova immediately. Your business data will be saved on this device. No account setup is required.</p><input id="email" type="email" placeholder="Email (optional)"><button id="continueBtn" class="primary" style="width:100%;margin-top:10px">Continue to Sharova</button><p id="status" class="muted" style="font-size:13px">Ready.</p></div></div>
+<div id="app" class="app"><aside class="side"><div class="brand">Sharova</div><div class="tag">BUSINESS INTELLIGENCE</div><nav class="nav"><button class="active" data-page="home">◈ Overview</button><button data-page="sales">＋ Sales</button><button data-page="expenses">− Expenses</button><button data-page="stock">▦ Stock</button><button data-page="credit">◎ Customer money</button></nav></aside>
+<main class="main"><div class="bar"><input id="businessName" placeholder="Business name"><button id="nameBtn">Save name</button></div>
+<section id="home" class="page active"><div class="top"><div><div class="eyebrow">BUSINESS PULSE</div><div id="greeting" class="title"></div><div id="date" class="muted"></div></div><button class="primary" data-go="sales">＋ Enter activity</button></div>
+<div class="brief"><h2>Today's Business Brief</h2><div class="grid"><div class="insight"><small>Attention</small><b id="attention">Add activity and Sharova will look for signals.</b></div><div class="insight"><small>Why it matters</small><b id="why">Your first entries create your business baseline.</b></div><div class="insight"><small>Next action</small><b id="next">Enter today's sales, expenses, stock and customer money.</b></div></div></div>
+<div class="metrics"><div class="metric"><span>Sales today</span><b id="salesMetric">KSh 0</b><button data-go="sales">＋ Enter sales</button></div><div class="metric"><span>Expenses today</span><b id="expenseMetric">KSh 0</b><button data-go="expenses">＋ Record expense</button></div><div class="metric"><span>Customer money owed</span><b id="creditMetric">KSh 0</b><button data-go="credit">＋ Add debt</button></div><div class="metric"><span>Stock value</span><b id="stockMetric">KSh 0</b><button data-go="stock">＋ Add stock</button></div></div>
+<div class="section"><b>What changed?</b><div id="changes" class="empty">No business activity recorded yet.</div></div></section>
+<section id="sales" class="page"><div class="eyebrow">BUSINESS ACTIVITY</div><div class="title">Sales</div><div class="section form"><label>Description<input id="saleName" placeholder="e.g. Cooking oil"></label><label>Amount (KSh)<input id="saleAmount" type="number" min="0"></label><label>Status<select id="saleStatus"><option value="paid">Paid</option><option value="debt">Customer owes</option></select></label><label>Date<input id="saleDate" type="date"></label><button id="saleBtn" class="primary full">Save sale</button></div><div class="section"><b>Recent sales</b><div id="salesList" class="empty">No records yet.</div></div></section>
+<section id="expenses" class="page"><div class="eyebrow">BUSINESS ACTIVITY</div><div class="title">Expenses</div><div class="section form"><label>Expense<input id="expenseName" placeholder="e.g. Transport"></label><label>Amount (KSh)<input id="expenseAmount" type="number" min="0"></label><label>Category<select id="expenseCat"><option>Stock</option><option>Transport</option><option>Utilities</option><option>Other</option></select></label><label>Date<input id="expenseDate" type="date"></label><button id="expenseBtn" class="primary full">Save expense</button></div><div class="section"><b>Recent expenses</b><div id="expenseList" class="empty">No records yet.</div></div></section>
+<section id="stock" class="page"><div class="eyebrow">BUSINESS ACTIVITY</div><div class="title">Stock</div><div class="section form"><label>Product<input id="stockName" placeholder="e.g. Sugar 1kg"></label><label>Quantity<input id="stockQty" type="number" min="0"></label><label>Unit cost (KSh)<input id="stockCost" type="number" min="0"></label><label>Reorder level<input id="stockReorder" type="number" min="0"></label><button id="stockBtn" class="primary full">Save stock item</button></div><div class="section"><b>Stock watch</b><div id="stockList" class="empty">No records yet.</div></div></section>
+<section id="credit" class="page"><div class="eyebrow">BUSINESS ACTIVITY</div><div class="title">Customer money</div><div class="section form"><label>Customer<input id="creditName" placeholder="Customer name"></label><label>Amount owed (KSh)<input id="creditAmount" type="number" min="0"></label><label>Date<input id="creditDate" type="date"></label><label>Note<input id="creditNote" placeholder="Optional"></label><button id="creditBtn" class="primary full">Save outstanding amount</button></div><div class="section"><b>Outstanding</b><div id="creditList" class="empty">No records yet.</div></div></section>
 </main></div>
-
 <script>
-const SUPABASE_URL='https://ofodxwpukrgegtavahfm.supabase.co';
-const SUPABASE_KEY='sb_publishable_RvJAQ8p31BacTxANx3gltw_KRxlpoxe';
-const sb=window.supabase?supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}):null;
-let user=null,business=null,entries=[],stocks=[];
-const today=()=>new Date().toISOString().slice(0,10);
-const money=n=>'KSh '+Number(n||0).toLocaleString('en-KE',{maximumFractionDigits:2});
-const val=id=>document.getElementById(id).value.trim();
-document.getElementById('date').textContent=new Date().toLocaleDateString('en-KE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-setGreeting();document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>showPage(b.dataset.page));
-
-async function sendMagicLink(){
- const email=val('email');if(!email)return setAuth('Enter your email address.');
- setAuth('Sending your sign-in link...');
- const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.href}});
- setAuth(error?error.message:'Check your email for the Sharova sign-in link.');
+(function(){
+var entries=JSON.parse(localStorage.getItem('sbi_entries')||'[]'),stocks=JSON.parse(localStorage.getItem('sbi_stocks')||'[]');
+var today=function(){return new Date().toISOString().slice(0,10)}, money=function(n){return 'KSh '+Number(n||0).toLocaleString('en-KE')}, val=function(id){return document.getElementById(id).value.trim()};
+function save(){localStorage.setItem('sbi_entries',JSON.stringify(entries));localStorage.setItem('sbi_stocks',JSON.stringify(stocks));}
+function go(id){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-page')===id)});window.scrollTo(0,0)}
+document.getElementById('continueBtn').onclick=function(){document.getElementById('auth').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('businessName').value=localStorage.getItem('sbi_name')||'My Business';render()};
+document.querySelectorAll('.nav button').forEach(function(b){b.onclick=function(){go(b.getAttribute('data-page'))}});
+document.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){go(b.getAttribute('data-go'))}});
+document.getElementById('nameBtn').onclick=function(){var n=val('businessName');if(n){localStorage.setItem('sbi_name',n);alert('Business name saved on this device.')}};
+document.getElementById('saleBtn').onclick=function(){var n=val('saleName'),a=val('saleAmount');if(!n||!a)return alert('Add a description and amount.');entries.unshift({type:'sale',name:n,amount:Number(a),date:val('saleDate')||today()});if(val('saleStatus')==='debt')entries.unshift({type:'debt',name:n,amount:Number(a),date:val('saleDate')||today()});save();render();alert('Sale saved.');};
+document.getElementById('expenseBtn').onclick=function(){var n=val('expenseName'),a=val('expenseAmount');if(!n||!a)return alert('Add an expense and amount.');entries.unshift({type:'expense',name:n+' · '+val('expenseCat'),amount:Number(a),date:val('expenseDate')||today()});save();render();alert('Expense saved.');};
+document.getElementById('stockBtn').onclick=function(){var n=val('stockName'),q=val('stockQty');if(!n||!q)return alert('Add a product and quantity.');var x=stocks.find(function(s){return s.name.toLowerCase()===n.toLowerCase()});var obj={name:n,quantity:Number(q),cost:Number(val('stockCost')||0),reorder:Number(val('stockReorder')||0)};if(x)Object.assign(x,obj);else stocks.unshift(obj);save();render();alert('Stock saved.');};
+document.getElementById('creditBtn').onclick=function(){var n=val('creditName'),a=val('creditAmount');if(!n||!a)return alert('Add a customer and amount.');entries.unshift({type:'debt',name:n+(val('creditNote')?' · '+val('creditNote'):''),amount:Number(a),date:val('creditDate')||today()});save();render();alert('Customer balance saved.');};
+function render(){var d=today(),sales=entries.filter(function(x){return x.type==='sale'&&x.date===d}).reduce(function(a,x){return a+x.amount},0),exp=entries.filter(function(x){return x.type==='expense'&&x.date===d}).reduce(function(a,x){return a+x.amount},0),debt=entries.filter(function(x){return x.type==='debt'}).reduce(function(a,x){return a+x.amount},0),sv=stocks.reduce(function(a,x){return a+x.quantity*x.cost},0);
+document.getElementById('salesMetric').textContent=money(sales);document.getElementById('expenseMetric').textContent=money(exp);document.getElementById('creditMetric').textContent=money(debt);document.getElementById('stockMetric').textContent=money(sv);
+var low=stocks.filter(function(x){return x.quantity<=x.reorder});var at=exp>sales&&exp>0?'Expenses are higher than sales today.':debt>0?'Customer money is outstanding.':low.length?low.length+' stock item(s) need attention.':sales>0?'Sales have been recorded today.':'No urgent signal yet.';document.getElementById('attention').textContent=at;document.getElementById('why').textContent=sales||exp||debt||sv?'Sharova is comparing the business activity you have entered.':'Your first entries create a baseline for useful business signals.';document.getElementById('next').textContent=exp>sales&&exp>0?'Review today’s spending.':debt>0?'Review outstanding customer balances.':low.length?'Check stock before restocking.':'Keep recording daily activity.';
+document.getElementById('changes').textContent=sales||exp||debt||sv?'Today: '+money(sales)+' sales · '+money(exp)+' expenses · '+money(debt)+' customer money owed · '+money(sv)+' stock value.':'No business activity recorded yet.';
+document.getElementById('salesList').innerHTML=entries.filter(function(x){return x.type==='sale'}).slice(0,10).map(function(x){return '<p>'+x.name+' · '+money(x.amount)+' · '+x.date+'</p>'}).join('')||'No records yet.';
+document.getElementById('expenseList').innerHTML=entries.filter(function(x){return x.type==='expense'}).slice(0,10).map(function(x){return '<p>'+x.name+' · '+money(x.amount)+' · '+x.date+'</p>'}).join('')||'No records yet.';
+document.getElementById('creditList').innerHTML=entries.filter(function(x){return x.type==='debt'}).slice(0,10).map(function(x){return '<p>'+x.name+' · '+money(x.amount)+' · '+x.date+'</p>'}).join('')||'No records yet.';
+document.getElementById('stockList').innerHTML=stocks.map(function(x){return '<p>'+x.name+' · '+x.quantity+' units · '+money(x.quantity*x.cost)+(x.quantity<=x.reorder?' · Reorder soon':'')+'</p>'}).join('')||'No records yet.';
+var h=new Date().getHours();document.getElementById('greeting').textContent=h<12?'Good morning.':h<18?'Good afternoon.':'Good evening.';document.getElementById('date').textContent=new Date().toLocaleDateString('en-KE',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 }
-function setAuth(t){document.getElementById('authStatus').textContent=t}
-async function signOut(){await sb.auth.signOut();location.reload()}
-function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));window.scrollTo({top:0,behavior:'smooth'})}
-function setGreeting(){const h=new Date().getHours();document.getElementById('greeting').textContent=h<12?'Good morning.':h<18?'Good afternoon.':'Good evening.'}
-function setStatus(container,text){document.getElementById(container).innerHTML=text}
-async function ensureBusiness(){
- let {data,error}=await sb.from('businesses').select('*').eq('user_id',user.id).order('created_at').limit(1).maybeSingle();
- if(error)throw error;
- if(!data){const r=await sb.from('businesses').insert({user_id:user.id,name:'My Business',currency:'KES'}).select().single();if(r.error)throw r.error;data=r.data}
- business=data;document.getElementById('businessName').value=data.name;
-}
-async function loadData(){
- const e=await sb.from('business_entries').select('*').eq('business_id',business.id).order('created_at',{ascending:false});
- if(e.error)throw e.error;entries=e.data||[];
- const s=await sb.from('stock_items').select('*').eq('business_id',business.id).order('updated_at',{ascending:false});
- if(s.error)throw s.error;stocks=s.data||[];
- renderAll();
-}
-function totals(){
- const day=entries.filter(x=>x.entry_date===today());
- return {sales:day.filter(x=>x.entry_type==='sale').reduce((a,x)=>a+Number(x.amount),0),
- expense:day.filter(x=>x.entry_type==='expense').reduce((a,x)=>a+Number(x.amount),0),
- credit:entries.filter(x=>x.entry_type==='customer_debt').reduce((a,x)=>a+Number(x.amount),0),
- stock:stocks.reduce((a,x)=>a+Number(x.quantity)*Number(x.unit_cost),0)};
-}
-function renderAll(){
- const t=totals();document.getElementById('salesMetric').textContent=money(t.sales);document.getElementById('expenseMetric').textContent=money(t.expense);document.getElementById('creditMetric').textContent=money(t.credit);document.getElementById('stockMetric').textContent=money(t.stock);
- renderLists();renderBrief(t);
-}
-function rows(items,formatter){return items.length?items.slice(0,10).map(formatter).join(''):'<div class="empty">No records yet.</div>'}
-function renderLists(){
- const sales=entries.filter(x=>x.entry_type==='sale');const ex=entries.filter(x=>x.entry_type==='expense');const cr=entries.filter(x=>x.entry_type==='customer_debt');
- setStatus('salesList',rows(sales,x=>'<div style="padding:12px 0;border-bottom:1px solid #e9e6df"><b>'+escapeHtml(x.description||'Sale')+'</b> · '+money(x.amount)+' · '+x.entry_date+'</div>'));
- setStatus('expenseList',rows(ex,x=>'<div style="padding:12px 0;border-bottom:1px solid #e9e6df"><b>'+escapeHtml(x.description||'Expense')+'</b> · '+money(x.amount)+' · '+x.entry_date+'</div>'));
- setStatus('creditList',rows(cr,x=>'<div style="padding:12px 0;border-bottom:1px solid #e9e6df"><b>'+escapeHtml(x.description||'Customer')+'</b> · '+money(x.amount)+' · '+x.entry_date+'</div>'));
- setStatus('stockList',rows(stocks,x=>'<div style="padding:12px 0;border-bottom:1px solid #e9e6df"><b>'+escapeHtml(x.name)+'</b> · '+x.quantity+' units · '+money(Number(x.quantity)*Number(x.unit_cost))+(Number(x.quantity)<=Number(x.reorder_level)?' · <span class="down">Reorder soon</span>':'')+'</div>'));
-}
-function escapeHtml(s){return String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
-function renderBrief(t){
- const low=stocks.filter(x=>Number(x.quantity)<=Number(x.reorder_level));
- let attention='No urgent signal yet.';let why='Sharova needs more activity to establish your business pattern.';let next='Keep recording today's activity.';
- if(t.expense>t.sales&&t.expense>0){attention='Expenses are higher than sales today.';why='More money has gone out than has come in from recorded sales today.';next='Review today's expenses and protect cash before adding non-essential spending.'}
- else if(t.credit>0){attention='Customer money is outstanding.';why='Some recorded sales are still tied up in customer balances.';next='Review outstanding customer balances and follow up on amounts that are due.'}
- else if(low.length){attention=low.length+' stock item'+(low.length>1?'s are':' is')+' at or below reorder level.';why='Low stock can interrupt sales if the item is still in demand.';next='Check those items against recent sales before restocking.'}
- else if(t.sales>0){attention='Sales have been recorded today.';why='You now have a real starting point for comparing sales with spending.';next='Keep recording activity so Sharova can detect changes over time.'}
- document.getElementById('attention').textContent=attention;document.getElementById('why').textContent=why;document.getElementById('next').textContent=next;
- const changed=t.sales||t.expense||t.credit||t.stock;document.getElementById('changes').innerHTML=changed?'<b>Today:</b> '+money(t.sales)+' sales · '+money(t.expense)+' expenses · '+money(t.credit)+' customer money owed · '+money(t.stock)+' stock value.':'No business activity recorded yet.';
-}
-function explainInsight(){const t=totals();alert('Sharova is currently using your saved sales, expenses, customer balances and stock to identify simple business signals. As more history builds, the intelligence layer can compare periods and explain changes more deeply.')}
-async function saveEntry(type,amount,description,date){
- const {error}=await sb.from('business_entries').insert({business_id:business.id,user_id:user.id,entry_type:type,amount:Number(amount),description,entry_date:date||today()});
- if(error)throw error;await loadData();
-}
-async function saveSale(){const n=val('saleName'),a=val('saleAmount');if(!n||!a)return alert('Add a description and amount.');try{await saveEntry('sale',a,n,val('saleDate')||today());if(val('saleStatus')==='customer_debt')await saveEntry('customer_debt',a,n,val('saleDate')||today());document.getElementById('saleName').value='';document.getElementById('saleAmount').value='';alert('Sale saved securely.')}catch(e){alert(e.message)}}
-async function saveExpense(){const n=val('expenseName'),a=val('expenseAmount');if(!n||!a)return alert('Add an expense and amount.');try{await saveEntry('expense',a,n+' · '+val('expenseCat'),val('expenseDate')||today());document.getElementById('expenseName').value='';document.getElementById('expenseAmount').value='';alert('Expense saved securely.')}catch(e){alert(e.message)}}
-async function saveStock(){const n=val('stockName'),q=val('stockQty');if(!n||!q)return alert('Add a product and quantity.');try{const payload={business_id:business.id,user_id:user.id,name:n,quantity:Number(q),unit_cost:Number(val('stockCost')||0),reorder_level:Number(val('stockReorder')||0),updated_at:new Date().toISOString()};const existing=stocks.find(x=>x.name.toLowerCase()===n.toLowerCase());const r=existing?await sb.from('stock_items').update(payload).eq('id',existing.id):await sb.from('stock_items').insert(payload);if(r.error)throw r.error;await loadData();document.getElementById('stockName').value='';document.getElementById('stockQty').value='';alert('Stock saved securely.')}catch(e){alert(e.message)}}
-async function saveCredit(){const n=val('creditName'),a=val('creditAmount');if(!n||!a)return alert('Add a customer and amount.');try{await saveEntry('customer_debt',a,n+(val('creditNote')?' · '+val('creditNote'):''),val('creditDate')||today());document.getElementById('creditName').value='';document.getElementById('creditAmount').value='';alert('Customer balance saved securely.')}catch(e){alert(e.message)}}
-async function saveBusinessName(){const n=val('businessName');if(!n)return;const {error}=await sb.from('businesses').update({name:n}).eq('id',business.id);if(error)return alert(error.message);business.name=n;alert('Business name saved.')}
-async function start(){
- const {data:{session}}=await sb.auth.getSession();if(session?.user){user=session.user;document.getElementById('auth').style.display='none';document.getElementById('app').style.display='flex';try{await ensureBusiness();await loadData()}catch(e){alert('Sharova could not load your business data: '+e.message)}}}
-/* Temporary offline-first mode: the app remains usable even when Supabase email
-   authentication is not configured. When account auth is connected later, the
-   existing Supabase path can be re-enabled without changing the business UI. */
-let localMode=true;
-function localKey(k){return 'sharova_bi_'+k}
-function readLocal(k,fallback){try{const v=localStorage.getItem(localKey(k));return v?JSON.parse(v):fallback}catch(e){return fallback}}
-function writeLocal(k,v){localStorage.setItem(localKey(k),JSON.stringify(v))}
-function startLocal(){
-  localMode=true;
-  user={id:'local-device-user'};
-  business={id:'local-business',user_id:user.id,name:readLocal('business_name','My Business'),currency:'KES'};
-  document.getElementById('auth').style.display='none';
-  document.getElementById('app').style.display='flex';
-  loadData().catch(e=>alert('Sharova could not load your saved data: '+e.message));
-}
-async function ensureBusiness(){
-  if(localMode)return;
-  let {data,error}=await sb.from('businesses').select('*').eq('user_id',user.id).order('created_at').limit(1).maybeSingle();
-  if(error)throw error;
-  if(!data){const r=await sb.from('businesses').insert({user_id:user.id,name:'My Business',currency:'KES'}).select().single();if(r.error)throw r.error;data=r.data}
-  business=data;document.getElementById('businessName').value=data.name;
-}
-async function loadData(){
-  if(localMode){
-    entries=readLocal('entries',[]);
-    stocks=readLocal('stocks',[]);
-    document.getElementById('businessName').value=readLocal('business_name','My Business');
-    renderAll(); return;
-  }
-  const e=await sb.from('business_entries').select('*').eq('business_id',business.id).order('created_at',{ascending:false});
-  if(e.error)throw e.error;entries=e.data||[];
-  const s=await sb.from('stock_items').select('*').eq('business_id',business.id).order('updated_at',{ascending:false});
-  if(s.error)throw s.error;stocks=s.data||[]; renderAll();
-}
-async function saveEntry(type,amount,description,date){
-  const item={id:'id_'+Date.now()+'_'+Math.random().toString(36).slice(2),business_id:business.id,user_id:user.id,entry_type:type,amount:Number(amount),description,entry_date:date||today(),created_at:new Date().toISOString()};
-  if(localMode){entries.unshift(item);writeLocal('entries',entries);renderAll();return}
-  const {error}=await sb.from('business_entries').insert(item);if(error)throw error;await loadData();
-}
-async function saveStock(){
-  const n=val('stockName'),q=val('stockQty');if(!n||!q)return alert('Add a product and quantity.');
-  try{
-    const payload={business_id:business.id,user_id:user.id,name:n,quantity:Number(q),unit_cost:Number(val('stockCost')||0),reorder_level:Number(val('stockReorder')||0),updated_at:new Date().toISOString()};
-    if(localMode){
-      const existing=stocks.find(x=>x.name.toLowerCase()===n.toLowerCase());
-      if(existing)Object.assign(existing,payload);else stocks.unshift({id:'id_'+Date.now()+'_'+Math.random().toString(36).slice(2),created_at:new Date().toISOString(),...payload});
-      writeLocal('stocks',stocks);renderAll();
-    }else{
-      const existing=stocks.find(x=>x.name.toLowerCase()===n.toLowerCase());
-      const r=existing?await sb.from('stock_items').update(payload).eq('id',existing.id):await sb.from('stock_items').insert(payload);
-      if(r.error)throw r.error;await loadData();
-    }
-    document.getElementById('stockName').value='';document.getElementById('stockQty').value='';
-    alert('Stock saved securely.');
-  }catch(e){alert(e.message)}
-}
-async function saveBusinessName(){
-  const n=val('businessName');if(!n)return;
-  if(localMode){business.name=n;writeLocal('business_name',n);alert('Business name saved on this device.');return}
-  const {error}=await sb.from('businesses').update({name:n}).eq('id',business.id);if(error)return alert(error.message);business.name=n;alert('Business name saved.')
-}
-async function start(){startLocal()}
-async function signOut(){if(localMode){location.reload();return}await sb.auth.signOut();location.reload()}
-if(sb){sb.auth.onAuthStateChange((event,session)=>{if(session?.user&&!user&&!localMode){user=session.user;start()}});}
-</script>
-</body></html>
+})();
+</script></body></html>
