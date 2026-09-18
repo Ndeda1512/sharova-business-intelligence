@@ -111,7 +111,7 @@ function renderLists(){
  setStatus('creditList',rows(cr,x=>'<div style="padding:12px 0;border-bottom:1px solid #e9e6df"><b>'+escapeHtml(x.description||'Customer')+'</b> · '+money(x.amount)+' · '+x.entry_date+'</div>'));
  setStatus('stockList',rows(stocks,x=>'<div style="padding:12px 0;border-bottom:1px solid #e9e6df"><b>'+escapeHtml(x.name)+'</b> · '+x.quantity+' units · '+money(Number(x.quantity)*Number(x.unit_cost))+(Number(x.quantity)<=Number(x.reorder_level)?' · <span class="down">Reorder soon</span>':'')+'</div>'));
 }
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function escapeHtml(s){return String(s).replace(/[&<>]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));}
 function renderBrief(t){
  const low=stocks.filter(x=>Number(x.quantity)<=Number(x.reorder_level));
  let attention='No urgent signal yet.';let why='Sharova needs more activity to establish your business pattern.';let next='Keep recording today's activity.';
@@ -169,7 +169,7 @@ async function loadData(){
   if(s.error)throw s.error;stocks=s.data||[]; renderAll();
 }
 async function saveEntry(type,amount,description,date){
-  const item={id:crypto.randomUUID(),business_id:business.id,user_id:user.id,entry_type:type,amount:Number(amount),description,entry_date:date||today(),created_at:new Date().toISOString()};
+  const item={id:'id_'+Date.now()+'_'+Math.random().toString(36).slice(2),business_id:business.id,user_id:user.id,entry_type:type,amount:Number(amount),description,entry_date:date||today(),created_at:new Date().toISOString()};
   if(localMode){entries.unshift(item);writeLocal('entries',entries);renderAll();return}
   const {error}=await sb.from('business_entries').insert(item);if(error)throw error;await loadData();
 }
@@ -179,7 +179,7 @@ async function saveStock(){
     const payload={business_id:business.id,user_id:user.id,name:n,quantity:Number(q),unit_cost:Number(val('stockCost')||0),reorder_level:Number(val('stockReorder')||0),updated_at:new Date().toISOString()};
     if(localMode){
       const existing=stocks.find(x=>x.name.toLowerCase()===n.toLowerCase());
-      if(existing)Object.assign(existing,payload);else stocks.unshift({id:crypto.randomUUID(),created_at:new Date().toISOString(),...payload});
+      if(existing)Object.assign(existing,payload);else stocks.unshift({id:'id_'+Date.now()+'_'+Math.random().toString(36).slice(2),created_at:new Date().toISOString(),...payload});
       writeLocal('stocks',stocks);renderAll();
     }else{
       const existing=stocks.find(x=>x.name.toLowerCase()===n.toLowerCase());
