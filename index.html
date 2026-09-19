@@ -88,12 +88,54 @@ button:hover{transform:translateY(-1px);box-shadow:0 7px 18px rgba(34,27,18,.08)
 (function(){
 var entries=JSON.parse(localStorage.getItem('sbi_entries')||'[]'),stocks=JSON.parse(localStorage.getItem('sbi_stocks')||'[]');
 var today=function(){return new Date().toISOString().slice(0,10)}, money=function(n){return 'KSh '+Number(n||0).toLocaleString('en-KE')}, val=function(id){return document.getElementById(id).value.trim()}, esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&#39;')};
-function save(){localStorage.setItem('sbi_entries',JSON.stringify(entries));localStorage.setItem('sbi_stocks',JSON.stringify(stocks));}
+var SBI_CLOUD_SYNC='https://ofodxwpukrgegtavahfm.supabase.co/functions/v1/sbi-cloud-sync';
+async function cloudRequest(action,code,deviceId,email,data){
+  try{
+    var r=await fetch(SBI_CLOUD_SYNC,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:action,code:code||'',device_id:deviceId||'',email:email||'',data:data||null})});
+    var j=await r.json();
+    if(!r.ok||!j.ok) throw new Error(j.error||'Cloud storage request failed');
+    return j;
+  }catch(e){console.warn('Sharova cloud storage:',e);return null}
+}
+function cloudSnapshot(){return {entries:entries,stocks:stocks,name:localStorage.getItem('sbi_name')||'My Business',contacts:JSON.parse(localStorage.getItem('sbi_customer_contacts')||'{}')}};
+function mergeCloudSnapshot(remote){
+  if(!remote||typeof remote!=='object')return;
+  var localEntries=entries.slice(), remoteEntries=Array.isArray(remote.entries)?remote.entries:[];
+  var seen={};localEntries.forEach(function(x){seen[JSON.stringify(x)]=true});
+  remoteEntries.forEach(function(x){var k=JSON.stringify(x);if(!seen[k]){entries.push(x);seen[k]=true}});
+  if(Array.isArray(remote.stocks)&&remote.stocks.length){
+    remote.stocks.forEach(function(rs){
+      var local=stocks.find(function(ls){return String(ls.name).toLowerCase()===String(rs.name).toLowerCase()});
+      if(!local)stocks.push(rs);else Object.assign(local,rs);
+    });
+  }
+  if(remote.name&&!localStorage.getItem('sbi_name'))localStorage.setItem('sbi_name',remote.name);
+  if(remote.contacts&&typeof remote.contacts==='object'){
+    var contacts=JSON.parse(localStorage.getItem('sbi_customer_contacts')||'{}');
+    Object.keys(remote.contacts).forEach(function(k){if(!contacts[k])contacts[k]=remote.contacts[k]});
+    localStorage.setItem('sbi_customer_contacts',JSON.stringify(contacts));
+  }
+  localStorage.setItem('sbi_entries',JSON.stringify(entries));
+  localStorage.setItem('sbi_stocks',JSON.stringify(stocks));
+}
+async function cloudLoad(code,deviceId,email){
+  var r=await cloudRequest('load',code,deviceId,email);
+  if(r&&r.data){mergeCloudSnapshot(r.data);return true}
+  return false;
+}
+function save(){
+  localStorage.setItem('sbi_entries',JSON.stringify(entries));
+  localStorage.setItem('sbi_stocks',JSON.stringify(stocks));
+  var code=localStorage.getItem('sbi_activation_code')||'',deviceId=localStorage.getItem('sbi_device_id')||'',email=localStorage.getItem('sbi_email')||'';
+  cloudRequest('save',code,deviceId,email,cloudSnapshot()).then(function(r){
+    if(r)localStorage.setItem('sbi_cloud_synced_at',r.saved_at||new Date().toISOString());
+  });
+}
 function go(id){document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active')});document.getElementById(id).classList.add('active');document.querySelectorAll('.nav button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-page')===id)});window.scrollTo(0,0)}
-document.getElementById('continueBtn').onclick=async function(){var status=document.getElementById('status'),email=document.getElementById('email').value.trim().toLowerCase(),code=document.getElementById('activationCode').value.trim().toUpperCase(),exempt=['sharonvugutsa12@gmail.com','ianmutiria349@gmail.com','ianmutiria1@gmail.com'].indexOf(email)!==-1;if(!code&&!exempt){status.textContent='Enter your activation code to continue.';return}var deviceId=localStorage.getItem('sbi_device_id');if(!deviceId){deviceId=crypto.randomUUID();localStorage.setItem('sbi_device_id',deviceId)}if(exempt){localStorage.setItem('sbi_activated','1');localStorage.setItem('sbi_email',email);status.textContent='Access verified. Opening your workspace…';document.getElementById('auth').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('businessName').value=localStorage.getItem('sbi_name')||'My Business';render();return}if(localStorage.getItem('sbi_activated')==='1'){document.getElementById('auth').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('businessName').value=localStorage.getItem('sbi_name')||'My Business';render();return}status.textContent='Checking your activation…';this.disabled=true;try{var r=await fetch('https://ofodxwpukrgegtavahfm.supabase.co/functions/v1/sharova-activate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code,device_id:deviceId,email:email})});var data=await r.json();if(!r.ok||!data.ok)throw new Error(data.error||'Activation failed.');localStorage.setItem('sbi_activated','1');localStorage.setItem('sbi_email',document.getElementById('email').value.trim());status.textContent='Activated. Opening your workspace…';document.getElementById('auth').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('businessName').value=localStorage.getItem('sbi_name')||'My Business';render()}catch(e){status.textContent=e.message||'Activation failed. Please try again.'}finally{this.disabled=false}};
+document.getElementById('continueBtn').onclick=async function(){var status=document.getElementById('status'),email=document.getElementById('email').value.trim().toLowerCase(),code=document.getElementById('activationCode').value.trim().toUpperCase(),exempt=['sharonvugutsa12@gmail.com','ianmutiria349@gmail.com','ianmutiria1@gmail.com'].indexOf(email)!==-1;if(!code&&!exempt){status.textContent='Enter your activation code to continue.';return}var deviceId=localStorage.getItem('sbi_device_id');if(!deviceId){deviceId=crypto.randomUUID();localStorage.setItem('sbi_device_id',deviceId)}localStorage.setItem('sbi_email',email);if(code)localStorage.setItem('sbi_activation_code',code);status.textContent=exempt?'Opening your workspace…':'Checking your activation…';this.disabled=true;try{if(!exempt){var r=await fetch('https://ofodxwpukrgegtavahfm.supabase.co/functions/v1/sharova-activate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:code,device_id:deviceId,email:email})});var data=await r.json();if(!r.ok||!data.ok)throw new Error(data.error||'Activation failed.');localStorage.setItem('sbi_activated','1');}else{localStorage.setItem('sbi_activated','1');}await cloudLoad(code,deviceId,email);status.textContent='Cloud backup connected. Opening your workspace…';document.getElementById('auth').style.display='none';document.getElementById('app').style.display='flex';document.getElementById('businessName').value=localStorage.getItem('sbi_name')||'My Business';render();save()}catch(e){status.textContent=e.message||'Activation failed. Please try again.'}finally{this.disabled=false}};
 document.querySelectorAll('.nav button').forEach(function(b){b.onclick=function(){go(b.getAttribute('data-page'))}});
 document.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){go(b.getAttribute('data-go'))}});
-document.getElementById('nameBtn').onclick=function(){var n=val('businessName');if(n){localStorage.setItem('sbi_name',n);alert('Business name saved on this device.')}};
+document.getElementById('nameBtn').onclick=function(){var n=val('businessName');if(n){localStorage.setItem('sbi_name',n);save();alert('Business name saved and backed up.')}};
 document.getElementById('saleBtn').onclick=function(){var product=val('saleProduct'),n=val('saleName'),a=val('saleAmount'),q=Number(val('saleQty')||1),saleDate=val('saleDate')||today();if(!n||!a||Number(a)<=0||q<=0)return alert('Add a valid description, amount and quantity.');if(product){var sx=stocks.find(function(s){return s.name===product});if(!sx)return alert('That stock item could not be found.');if(q>sx.quantity)return alert('Quantity sold is higher than current stock. Update stock first.');sx.quantity-=q;}entries.unshift({type:'sale',name:n,product:product,quantity:q,amount:Number(a),date:saleDate});if(val('saleStatus')==='debt')entries.unshift({type:'debt',name:n,amount:Number(a),date:saleDate});save();render();alert('Sale saved. Stock updated.');};
 document.getElementById('expenseBtn').onclick=function(){var n=val('expenseName'),a=val('expenseAmount');if(!n||!a||Number(a)<=0)return alert('Add a valid expense and amount.');entries.unshift({type:'expense',name:n+' · '+val('expenseCat'),amount:Number(a),date:val('expenseDate')||today()});save();render();alert('Expense saved.');};
 document.getElementById('stockBtn').onclick=function(){var n=val('stockName'),q=val('stockQty');if(!n||q===''||Number(q)<0||Number(val('stockCost')||0)<0||Number(val('stockReorder')||0)<0)return alert('Add valid stock details.');var x=stocks.find(function(s){return s.name.toLowerCase()===n.toLowerCase()});var obj={name:n,quantity:Number(q),cost:Number(val('stockCost')||0),reorder:Number(val('stockReorder')||0)};if(x)Object.assign(x,obj);else stocks.unshift(obj);save();render();alert('Stock saved.');};
